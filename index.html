@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Red Neuronal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header>
+      <span class="tag">NEURAL NETWORK</span>
+      <h1>Red Neuronal</h1>
+      <p>Una red neuronal mínima ejecutándose directamente en tu navegador.</p>
+    </header>
+
+    <section class="card network-card">
+      <div class="network">
+        <div class="layer">
+          <span class="layer-title">ENTRADAS</span>
+          <div class="node" id="input1">0</div>
+          <div class="node" id="input2">0</div>
+        </div>
+        <div class="connections"><span></span><span></span></div>
+        <div class="layer">
+          <span class="layer-title">SALIDA</span>
+          <div class="node output" id="output">0.000</div>
+        </div>
+      </div>
+      <div class="status" id="status">Red sin entrenar</div>
+    </section>
+
+    <section class="grid">
+      <div class="card controls">
+        <h2>Probar la red</h2>
+        <label>Entrada 1 <input id="x1" type="number" min="0" max="1" step="1" value="0"></label>
+        <label>Entrada 2 <input id="x2" type="number" min="0" max="1" step="1" value="0"></label>
+        <button id="predict">Predecir</button>
+        <button id="train">Entrenar 10,000 épocas</button>
+      </div>
+
+      <div class="card result">
+        <h2>Resultado</h2>
+        <div class="prediction" id="prediction">0.000</div>
+        <p id="classification">Sin predicción</p>
+        <div class="bar"><div id="barFill"></div></div>
+      </div>
+    </section>
+
+    <section class="card table-card">
+      <h2>Tabla AND</h2>
+      <div id="table"></div>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
