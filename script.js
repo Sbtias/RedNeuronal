@@ -265,14 +265,43 @@ $('openMemoryHint')?.addEventListener('click',()=>toggleMemory(true));
 $('statusMemory')?.addEventListener('click',()=>toggleMemory(true));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')toggleMemory(false)});
 
-$('chatForm')?.addEventListener('submit',e=>{
- e.preventDefault();const input=$('chatInput'),q=input.value.trim();if(!q)return;add(q,'user');input.value='';
- if(!trained){add('Entrena el núcleo desde Home primero. 🧠','neuron');return}
- const response=answer(q);add(response,'neuron');
- // Solo consolida respuestas conocidas. Las respuestas de fallback nunca se convierten en "verdades".
- const knownBefore=memory.length;
- if(response&&!FALLBACKS.includes(response))autoLearnFromInteraction(q,response,'chat');
- if(memory.length!==knownBefore)update();
+async function runRDioChat(q){
+ const ai=window.RDioAI;
+ if(ai?.chat){
+  try{
+   if($('chatState'))$('chatState').textContent=ai.isReady()?'IA local activa':'cargando cerebro…';
+   const response=await ai.chat(q);
+   if($('chatState'))$('chatState').textContent='IA local activa';
+   return response;
+  }catch(error){
+   console.warn('IA local:',error);
+   if($('chatState'))$('chatState').textContent='modo básico';
+  }
+ }
+ return answer(q);
+}
+
+function shouldLearn(text){
+ const n=normalize(text);
+ return /^(recuerda|aprende|memoriza|guarda|mi\s+[^?]{1,80}\s+(es|son)|me gusta\s+|prefiero\s+|llamame\s+)/.test(n);
+}
+
+$('chatForm')?.addEventListener('submit',async e=>{
+ e.preventDefault();const input=$('chatInput'),q=input.value.trim();if(!q)return;
+ add(q,'user');input.value='';
+ const send=$('send');if(send)send.disabled=true;
+ try{
+  const response=await runRDioChat(q);
+  add(response,'neuron');
+  if(shouldLearn(q)){
+   const learned=autoLearnFromInteraction(q,response,'explicit-user-memory');
+   if(learned)learningEvents++;
+   update();
+   queueSave();
+  }
+ }finally{
+  if(send)send.disabled=false;
+ }
 });
 
 window.addEventListener('resize',()=>{networkCache=null;networkDirty=true;renderNetwork()});
