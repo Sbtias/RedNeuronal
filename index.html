@@ -4,39 +4,45 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
   <meta name="theme-color" content="#070707">
-  <title>Neurona</title>
+  <title>Red Neuronal</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="app">
     <header>
       <span>NEURAL 3D</span>
-      <h1>Neurona</h1>
-      <p>Entrena, conversa y comparte lo aprendido.</p>
+      <h1>Red Neuronal</h1>
+      <p>Una red pequeña que puedes ver, entrenar y explorar.</p>
     </header>
 
     <section class="viewer card">
-      <div id="scene" aria-label="Modelo 3D de una neurona">
-        <div id="neuron3d">
-          <div class="soma"><div class="nucleus"></div></div>
-          <div class="dendrites" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-          <div class="axon" aria-hidden="true"><i class="myelin"></i><i class="myelin"></i><i class="myelin"></i><i class="myelin"></i><b class="terminal"></b></div>
+      <div id="scene" aria-label="Visualización 3D de una red neuronal">
+        <div id="network3d">
+          <div class="networkTitle">2 → 4 → 1</div>
+          <div id="connections"></div>
+          <div id="nodes"></div>
         </div>
-        <small>Toca y arrastra para girar</small>
+        <div class="sceneHint">Arrastra para rotar · rueda para acercar</div>
       </div>
       <div class="actions">
-        <button id="train">Entrenar neurona</button>
+        <button id="train">Entrenar red</button>
         <button id="reset" class="secondary">Reiniciar</button>
       </div>
       <div class="status">
-        <span id="state">Lista para aprender</span>
+        <span id="state">Lista para aprender XOR</span>
         <b id="epoch">0</b>
       </div>
     </section>
 
+    <section class="stats card">
+      <div><span>ERROR</span><strong id="loss">1.0000</strong></div>
+      <div><span>SALIDA</span><strong id="prediction">0.000</strong></div>
+      <div><span>ARQUITECTURA</span><strong>2·4·1</strong></div>
+    </section>
+
     <section class="card info">
-      <strong id="result">La neurona todavía no ha aprendido.</strong>
-      <p id="infoText">Entrénala una vez y después conversa con ella.</p>
+      <strong id="result">La red todavía no ha aprendido.</strong>
+      <p id="infoText">Entrénala para que aprenda el problema XOR y observa cómo cambian sus conexiones.</p>
     </section>
 
     <section class="card chat">
@@ -47,13 +53,13 @@
       <div class="quickPrompts">
         <button type="button" data-prompt="Hola">Hola</button>
         <button type="button" data-prompt="¿Quién eres?">¿Quién eres?</button>
-        <button type="button" data-prompt="¿Qué sabes?">¿Qué sabes?</button>
+        <button type="button" data-prompt="¿Qué aprendiste?">¿Qué aprendiste?</button>
       </div>
       <div id="messages" class="messages" aria-live="polite">
-        <div class="message neuronMessage">Hola. Entréname y luego podemos hablar. 🧠</div>
+        <div class="message neuronMessage">Soy una red neuronal pequeña. Entréname y podemos hablar. 🧠</div>
       </div>
       <form id="chatForm" class="chatForm">
-        <input id="chatInput" type="text" maxlength="300" autocomplete="off" enterkeyhint="send" placeholder="Escribe algo..." aria-label="Mensaje para la neurona">
+        <input id="chatInput" type="text" maxlength="300" autocomplete="off" enterkeyhint="send" placeholder="Escribe algo..." aria-label="Mensaje para la red neuronal">
         <button id="send" type="submit">Enviar</button>
       </form>
     </section>
