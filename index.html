@@ -3,53 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Red Neuronal</title>
+  <title>Red Neuronal 3D</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="app">
     <header>
-      <span class="tag">NEURAL NETWORK</span>
+      <span class="tag">NEURAL NETWORK / 3D</span>
       <h1>Red Neuronal</h1>
-      <p>Una red neuronal mínima ejecutándose directamente en tu navegador.</p>
+      <p>Explora las neuronas y sus conexiones en un espacio 3D.</p>
     </header>
 
-    <section class="card network-card">
-      <div class="network">
-        <div class="layer">
-          <span class="layer-title">ENTRADAS</span>
-          <div class="node" id="input1">0</div>
-          <div class="node" id="input2">0</div>
+    <section class="card viewer-card">
+      <div id="scene" class="scene">
+        <div class="layer-label input-label">ENTRADAS</div>
+        <div class="layer-label hidden-label">CAPA OCULTA</div>
+        <div class="layer-label output-label">SALIDA</div>
+        <div id="network3d" class="network3d">
+          <div class="layer inputs">
+            <div class="neuron" data-value="0">0</div>
+            <div class="neuron" data-value="0">0</div>
+          </div>
+          <div class="layer hidden">
+            <div class="neuron">N</div><div class="neuron">N</div>
+            <div class="neuron">N</div><div class="neuron">N</div>
+          </div>
+          <div class="layer outputs">
+            <div class="neuron output">0.000</div>
+          </div>
         </div>
-        <div class="connections"><span></span><span></span></div>
-        <div class="layer">
-          <span class="layer-title">SALIDA</span>
-          <div class="node output" id="output">0.000</div>
-        </div>
+        <div class="hint">Arrastra para girar · Rueda para acercar</div>
       </div>
-      <div class="status" id="status">Red sin entrenar</div>
+
+      <div class="controls">
+        <button id="train">Entrenar</button>
+        <button id="reset">Reiniciar</button>
+        <button id="rotate">Rotación automática</button>
+      </div>
+
+      <div class="stats">
+        <span>Entrada: <b>2</b></span>
+        <span>Ocultas: <b>4</b></span>
+        <span>Salida: <b>1</b></span>
+        <span>Épocas: <b id="epoch">0</b></span>
+      </div>
     </section>
 
-    <section class="grid">
-      <div class="card controls">
-        <h2>Probar la red</h2>
+    <section class="card info-card">
+      <h2>¿Qué estás viendo?</h2>
+      <p>Cada esfera representa una neurona. Las líneas representan conexiones entre capas. El modelo aprende la operación lógica <strong>AND</strong>.</p>
+      <div class="inputs">
         <label>Entrada 1 <input id="x1" type="number" min="0" max="1" step="1" value="0"></label>
         <label>Entrada 2 <input id="x2" type="number" min="0" max="1" step="1" value="0"></label>
         <button id="predict">Predecir</button>
-        <button id="train">Entrenar 10,000 épocas</button>
       </div>
-
-      <div class="card result">
-        <h2>Resultado</h2>
-        <div class="prediction" id="prediction">0.000</div>
-        <p id="classification">Sin predicción</p>
-        <div class="bar"><div id="barFill"></div></div>
-      </div>
-    </section>
-
-    <section class="card table-card">
-      <h2>Tabla AND</h2>
-      <div id="table"></div>
+      <div class="result">Salida: <strong id="prediction">0.000</strong> · <span id="classification">Resultado: 0</span></div>
     </section>
   </main>
   <script src="script.js"></script>
