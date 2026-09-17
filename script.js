@@ -1,4 +1,4 @@
-/* RDio Neural Core v9.0 · aprendizaje autónomo + respuestas dinámicas */
+/* RDio Neural Core v10.0 · aprendizaje real + respuestas dinámicas */
 'use strict';
 
 const $=id=>document.getElementById(id);
@@ -8,7 +8,7 @@ const STATE_KEY='__RDIO_STATE_V7__';
 const LOCAL_MEMORY_KEY='rdio_memory_v7';
 
 class NeuralNetwork{
-  constructor(layers=[2,32,24,16,8,1]){this.layers=layers.slice();this.learningRate=.14;this.reset()}
+  constructor(layers=[2,48,32,24,12,1]){this.layers=layers.slice();this.learningRate=.14;this.reset()}
   reset(){this.weights=[];this.biases=[];for(let l=0;l<this.layers.length-1;l++){const input=this.layers[l],output=this.layers[l+1],scale=Math.sqrt(2/input);this.weights.push(Array.from({length:output},()=>Array.from({length:input},()=>((Math.random()*2-1)*scale))));this.biases.push(Array(output).fill(0))}}
   sigmoid(x){const z=Math.max(-40,Math.min(40,x));return 1/(1+Math.exp(-z))}
   forward(input,trace=false){let a=input.map(Number),acts=[a.slice()];for(let l=0;l<this.weights.length;l++){a=this.weights[l].map((row,j)=>this.sigmoid(this.biases[l][j]+row.reduce((sum,w,i)=>sum+w*a[i],0)));acts.push(a.slice())}return trace?acts:a[0]}
@@ -85,7 +85,7 @@ function setStatus(text){if($('dbState'))$('dbState').textContent=text;if($('cha
 function update(progress=0){
  const set=(id,v)=>{const e=$(id);if(e)e.textContent=v};
  set('epoch',epoch.toLocaleString());set('loss',Number(loss).toFixed(4));set('prediction',brain.predict([0,1]).toFixed(3));
- set('memoryCount',memory.length.toLocaleString());set('learningEvents',learningEvents.toLocaleString());set('architecture',brain.layers.join(' · '));
+ set('memoryCount',memory.length.toLocaleString());set('learningEvents',learningEvents.toLocaleString());set('drawerMemoryCount',memory.length.toLocaleString());set('drawerLearningEvents',learningEvents.toLocaleString());set('architecture',brain.layers.join(' · '));
  set('state',trained?'Aprendizaje adaptativo activo':'Lista para entrenar');
  if($('progressBar'))$('progressBar').style.width=`${Math.max(0,Math.min(100,progress))}%`;
  renderMemoryTable();if(typeof networkDirty!=='undefined')networkDirty=true;if(typeof networkCache!=='undefined')networkCache=null;invalidateNetwork()
@@ -137,8 +137,8 @@ function trainEpoch(){let total=0;const batch=XOR.slice().sort(()=>Math.random()
 async function train(){
  if(isTraining)return;isTraining=true;const b=$('train');if(b)b.disabled=true;if($('reset'))$('reset').disabled=true;if($('state'))$('state').textContent='Entrenando…';
  try{
-  const total=2200;
-  for(let i=0;i<total;i++){loss=trainEpoch();epoch++;if(i%50===0){update(i/total*100);await new Promise(requestAnimationFrame)}}
+  const total=3200;
+  for(let i=0;i<total;i++){loss=trainEpoch();epoch++;if(i%80===0){update(i/total*100);await new Promise(requestAnimationFrame)}}
   loss=XOR.reduce((s,x)=>s+(x.target[0]-brain.predict(x.input))**2,0)/XOR.length;trained=true;learningEvents++;update(100);queueSave();
   if($('state'))$('state').textContent=`Entrenada · error ${loss.toFixed(4)}`
  }catch(e){console.error(e);if($('state'))$('state').textContent='Error: '+e.message}
@@ -157,6 +157,17 @@ function teachPair(question,answerText){
  memory=memory.filter(x=>normalize(x.question)!==normalize(question));memory.unshift({question,answer:answerText,learned:true,hits:1,created_at:new Date().toISOString()});
  memory=memory.slice(0,2000);learningEvents++;saveLocal();renderMemoryTable();learnInput(question);saveMemory(question,answerText);queueSave();
  if($('learnResult'))$('learnResult').textContent='✓ RDio aprendió este par y lo guardó en su memoria.';return true
+}
+
+function autoLearnFromInteraction(question,answerText,source='interaction'){
+ question=String(question||'').trim();answerText=String(answerText||'').trim();
+ if(!question||!answerText||answerText.length>600)return false;
+ const normalized=normalize(question);
+ if(normalized.length<3||FALLBACKS.includes(answerText))return false;
+ const existing=memory.find(x=>normalize(x.question)===normalized);
+ if(existing){existing.answer=answerText;existing.learned=true;existing.hits=(Number(existing.hits)||0)+1;existing.source=source;saveLocal();renderMemoryTable();return false}
+ memory.unshift({question,answer:answerText,learned:true,hits:1,source,created_at:new Date().toISOString()});
+ memory=memory.slice(0,2000);learningEvents++;learnInput(question);saveLocal();renderMemoryTable();queueSave();return true
 }
 
 function chooseVariant(list){
@@ -214,7 +225,15 @@ function renderMemoryTable(){
 }
 
 function add(text,type){
- const el=document.createElement('div');el.className=type==='user'?'message userMessage':'message neuronMessage';el.textContent=text;$('messages').appendChild(el);$('messages').scrollTop=$('messages').scrollHeight
+ const box=$('messages');if(!box)return;
+ const el=document.createElement('div');el.className=type==='user'?'message userMessage':'message neuronMessage';el.textContent=text;box.appendChild(el);box.scrollTop=box.scrollHeight
+}
+
+function toggleMemory(force){
+ const drawer=$('memoryDrawer'),backdrop=$('memoryBackdrop'),button=$('memoryToggle');if(!drawer||!button)return;
+ const open=typeof force==='boolean'?force:!drawer.classList.contains('open');
+ drawer.classList.toggle('open',open);drawer.setAttribute('aria-hidden',String(!open));button.setAttribute('aria-expanded',String(open));
+ if(backdrop)backdrop.hidden=!open;document.body.style.overflow=open?'hidden':'';
 }
 
 function pos(layer,index,w,h){const count=brain.layers[layer],x=38+(w-76)*layer/(brain.layers.length-1),gap=Math.min(45,(h-90)/Math.max(1,count-1));return{x,y:h/2+(index-(count-1)/2)*gap}}
@@ -239,11 +258,21 @@ $('learnForm')?.addEventListener('submit',e=>{e.preventDefault();const q=$('lear
 
 $('train')?.addEventListener('click',train);
 $('reset')?.addEventListener('click',reset);
+$('memoryToggle')?.addEventListener('click',()=>toggleMemory());
+$('memoryClose')?.addEventListener('click',()=>toggleMemory(false));
+$('memoryBackdrop')?.addEventListener('click',()=>toggleMemory(false));
+$('openMemoryHint')?.addEventListener('click',()=>toggleMemory(true));
+$('statusMemory')?.addEventListener('click',()=>toggleMemory(true));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')toggleMemory(false)});
 
 $('chatForm')?.addEventListener('submit',e=>{
  e.preventDefault();const input=$('chatInput'),q=input.value.trim();if(!q)return;add(q,'user');input.value='';
  if(!trained){add('Entrena el núcleo desde Home primero. 🧠','neuron');return}
- add(answer(q),'neuron');update()
+ const response=answer(q);add(response,'neuron');
+ // Solo consolida respuestas conocidas. Las respuestas de fallback nunca se convierten en "verdades".
+ const knownBefore=memory.length;
+ if(response&&!FALLBACKS.includes(response))autoLearnFromInteraction(q,response,'chat');
+ if(memory.length!==knownBefore)update();
 });
 
 window.addEventListener('resize',()=>{networkCache=null;networkDirty=true;renderNetwork()});
