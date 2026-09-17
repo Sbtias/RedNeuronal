@@ -25,5 +25,15 @@ with check (
   and char_length(answer) between 1 and 600
 );
 
+create policy "public can update neural memory"
+on public.neural_memory
+for update
+to anon
+using (true)
+with check (
+  char_length(question) between 1 and 300
+  and char_length(answer) between 1 and 600
+);
+
 create index if not exists neural_memory_created_at_idx
 on public.neural_memory (created_at desc);
