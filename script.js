@@ -31,21 +31,24 @@ const trainingData = [
 
 const brain = new NeuralNetwork();
 const $ = id => document.getElementById(id);
+
+const SUPABASE_URL = "https://otdfvaufiqwlwmaqsljs.supabase.co";
+const SUPABASE_KEY = "sb_publishable_jC98NCK4bQeRRYmlZL9CVw_tALEihhJ";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const MEMORY_KEY = "neural3d_chat_memory_v2";
+let learnedMemory = loadLocalMemory();
+let globalMemory = [];
 let epoch = 0;
 let angleX = 12;
 let angleY = -18;
 let zoom = 1;
-let rotating = false;
 let dragging = false;
 let lastX = 0;
 let lastY = 0;
 let trained = false;
 
-// Memoria de conversación. Se guarda en este dispositivo.
-const MEMORY_KEY = "neural3d_chat_memory_v1";
-let learnedMemory = loadMemory();
-
-function loadMemory() {
+function loadLocalMemory() {
   try {
     const saved = JSON.parse(localStorage.getItem(MEMORY_KEY) || "[]");
     return Array.isArray(saved) ? saved.slice(-100) : [];
@@ -54,7 +57,7 @@ function loadMemory() {
   }
 }
 
-function saveMemory() {
+function saveLocalMemory() {
   localStorage.setItem(MEMORY_KEY, JSON.stringify(learnedMemory.slice(-100)));
 }
 
@@ -62,30 +65,16 @@ function normalize(text) {
   return text
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\\u0300-\\u036f]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9ñ?¿! ]/g, "")
-    .replace(/\\s+/g, " ")
+    .replace(/\s+/g, " ")
     .trim();
-}
-
-function learnFromConversation(question, answer) {
-  const q = normalize(question);
-  if (!q || !answer) return;
-
-  const existing = learnedMemory.find(item => item.question === q);
-  if (existing) {
-    existing.answer = answer;
-    existing.uses = (existing.uses || 0) + 1;
-  } else {
-    learnedMemory.push({ question: q, answer, uses: 1 });
-  }
-  learnedMemory = learnedMemory.slice(-100);
-  saveMemory();
 }
 
 function findLearnedAnswer(text) {
   const q = normalize(text);
-  const exact = learnedMemory.find(item => item.question === q);
+  const all = [...globalMemory, ...learnedMemory];
+  const exact = all.find(item => normalize(item.question) === q);
   if (exact) return exact.answer;
 
   const words = q.split(" ").filter(word => word.length > 3);
@@ -93,8 +82,8 @@ function findLearnedAnswer(text) {
 
   let best = null;
   let bestScore = 0;
-  for (const item of learnedMemory) {
-    const knownWords = new Set(item.question.split(" "));
+  for (const item of all) {
+    const knownWords = new Set(normalize(item.question).split(" "));
     const score = words.filter(word => knownWords.has(word)).length / words.length;
     if (score > bestScore && score >= 0.6) {
       best = item.answer;
@@ -104,14 +93,59 @@ function findLearnedAnswer(text) {
   return best;
 }
 
+async function loadGlobalMemory() {
+  try {
+    const { data, error } = await supabaseClient
+      .from("neural_memory")
+      .select("question,answer")
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    if (error) throw error;
+    globalMemory = Array.isArray(data) ? data : [];
+    $("chatState").textContent = trained ? "memoria conectada" : "sin entrenar";
+  } catch (error) {
+    console.warn("Memoria global no disponible:", error.message);
+    globalMemory = [];
+    $("chatState").textContent = trained ? "modo local" : "sin entrenar";
+  }
+}
+
+async function saveGlobalMemory(question, answer) {
+  const cleanQuestion = question.trim().slice(0, 300);
+  const cleanAnswer = answer.trim().slice(0, 600);
+  if (!cleanQuestion || !cleanAnswer) return;
+
+  try {
+    const { error } = await supabaseClient.from("neural_memory").insert({
+      question: cleanQuestion,
+      answer: cleanAnswer
+    });
+    if (error) throw error;
+    globalMemory.unshift({ question: cleanQuestion, answer: cleanAnswer });
+    globalMemory = globalMemory.slice(0, 500);
+  } catch (error) {
+    console.warn("No se pudo guardar en memoria global:", error.message);
+  }
+}
+
+function rememberConversation(question, answer) {
+  const normalizedQuestion = normalize(question);
+  const existing = learnedMemory.find(item => normalize(item.question) === normalizedQuestion);
+  if (existing) {
+    existing.answer = answer;
+    existing.uses = (existing.uses || 0) + 1;
+  } else {
+    learnedMemory.push({ question: question.trim(), answer, uses: 1 });
+  }
+  learnedMemory = learnedMemory.slice(-100);
+  saveLocalMemory();
+}
+
 function render() {
   const neuron = $("neuron3d");
   if (!neuron) return;
   neuron.style.transform = `translate(-50%,-50%) scale(${zoom}) rotateX(${angleX}deg) rotateY(${angleY}deg)`;
-  if (rotating) {
-    angleY += 0.25;
-    requestAnimationFrame(render);
-  }
 }
 
 function trainBrain() {
@@ -135,12 +169,13 @@ function trainBrain() {
     }
 
     trained = true;
-    $("state").textContent = "Entrenamiento completado";
-    $("chatState").textContent = "lista para aprender";
+    $("state").textContent = "Entrenada";
+    $("chatState").textContent = "memoria conectada";
     $("result").textContent = "La neurona está lista para aprender del chat.";
-    $("infoText").textContent = "Cada conversación puede enseñarle nuevas respuestas en este dispositivo.";
+    $("infoText").textContent = "Lo que aprende se guarda localmente y, si Supabase está conectado, también en la memoria global.";
     $("scene").classList.add("trained");
     button.disabled = false;
+    loadGlobalMemory();
     $("chatInput").focus();
   };
 
@@ -163,14 +198,14 @@ function neuronReply(text) {
   if (learned) return learned;
 
   if (message.includes("hola") || message.includes("buenas")) return "Hola. Mis conexiones están activas. 🧠";
-  if (message.includes("quien eres")) return "Soy una pequeña neurona artificial. Tengo pesos, un sesgo, una función de activación y ahora también memoria de conversación.";
+  if (message.includes("quien eres")) return "Soy una pequeña neurona artificial. Tengo pesos, un sesgo, una función de activación y una memoria compartida.";
   if (message.includes("como estas")) return "Funcionando. No tengo emociones, pero mis cálculos están despiertos.";
-  if (message.includes("entrenar") || message.includes("aprend")) return "El entrenamiento ajustó mis pesos. Además, puedo guardar nuevas conversaciones como memoria para responder mejor después.";
-  if (message.includes("que puedes hacer")) return "Puedo procesar mensajes, recordar respuestas aprendidas en este dispositivo y mostrar visualmente mi estructura neuronal.";
-  if (message.includes("que sabes") || message.includes("sabes sobre")) return "Sé lo que viene programado y lo que he aprendido durante las conversaciones guardadas en esta memoria.";
+  if (message.includes("entrenar") || message.includes("aprend")) return "El entrenamiento ajustó mis pesos. Además, cada conversación puede dejar un ejemplo en mi memoria.";
+  if (message.includes("que puedes hacer")) return "Puedo procesar mensajes, recordar ejemplos y compartirlos con otros usuarios mediante la memoria global.";
+  if (message.includes("que sabes") || message.includes("sabes sobre")) return "Conozco lo programado y los ejemplos que están guardados en mi memoria local o global.";
   if (message.includes("adios")) return "Hasta luego. Mis dendritas seguirán aquí, dramáticamente inmóviles.";
-  if (message.endsWith("?")) return "Todavía no conozco esa respuesta. Si me enseñas una respuesta concreta, puedo recordarla en este dispositivo. 🧠";
-  return "He recibido esa información. Puedo recordarla como parte de nuestra conversación, aunque todavía no tengo conocimiento general como una IA grande.";
+  if (message.endsWith("?")) return "Todavía no tengo una respuesta para eso. Si conversamos y aparece una respuesta útil, podré guardarla como ejemplo. 🧠";
+  return "He recibido esa información. La conversación puede convertirse en un nuevo ejemplo para mi memoria.";
 }
 
 $("train").addEventListener("click", trainBrain);
@@ -188,19 +223,13 @@ $("reset").addEventListener("click", () => {
   $("state").textContent = "Lista para aprender";
   $("chatState").textContent = "sin entrenar";
   $("result").textContent = "La neurona todavía no ha aprendido.";
-  $("infoText").textContent = "Presiona Entrenar neurona y el modelo aprenderá automáticamente.";
+  $("infoText").textContent = "Entrénala una vez y después conversa con ella.";
   $("scene").classList.remove("trained");
-  $("messages").innerHTML = '<div class="message neuronMessage">Memoria reiniciada. Entréname y podemos volver a empezar. 🧠</div>';
+  $("messages").innerHTML = '<div class="message neuronMessage">Memoria local reiniciada. La memoria global permanece para los demás usuarios. 🧠</div>';
   render();
 });
 
-$("rotate").addEventListener("click", event => {
-  rotating = !rotating;
-  event.currentTarget.textContent = rotating ? "Detener rotación" : "Rotación automática";
-  if (rotating) render();
-});
-
-$("chatForm").addEventListener("submit", event => {
+$("chatForm").addEventListener("submit", async event => {
   event.preventDefault();
   const input = $("chatInput");
   const text = input.value.trim();
@@ -210,17 +239,28 @@ $("chatForm").addEventListener("submit", event => {
   input.value = "";
   input.disabled = true;
   $("send").disabled = true;
+  $("chatState").textContent = "pensando...";
 
-  setTimeout(() => {
-    const reply = neuronReply(text);
-    addMessage(reply, "neuron");
-    // La respuesta generada queda asociada a la pregunta para futuras conversaciones.
-    learnFromConversation(text, reply);
-    input.disabled = false;
-    $("send").disabled = false;
-    input.focus();
-  }, 280);
+  await new Promise(resolve => setTimeout(resolve, 220));
+  const reply = neuronReply(text);
+  addMessage(reply, "neuron");
+
+  rememberConversation(text, reply);
+  await saveGlobalMemory(text, reply);
+
+  input.disabled = false;
+  $("send").disabled = false;
+  $("chatState").textContent = globalMemory.length ? "memoria conectada" : "modo local";
+  input.focus();
 });
+
+for (const button of document.querySelectorAll("[data-prompt]")) {
+  button.addEventListener("click", () => {
+    const input = $("chatInput");
+    input.value = button.dataset.prompt || "";
+    input.focus();
+  });
+}
 
 const scene = $("scene");
 scene.addEventListener("pointerdown", event => {
@@ -249,3 +289,4 @@ scene.addEventListener("wheel", event => {
 }, { passive: false });
 
 render();
+loadGlobalMemory();
