@@ -1,24 +1,53 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Neural 3D</title><link rel="stylesheet" href="style.css"></head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Neurona 3D</title>
+  <link rel="stylesheet" href="style.css">
+</head>
 <body>
-<main class="app">
-  <header><span>NEURAL 3D</span><h1>Red neuronal</h1><p>Una red pequeña. Visible. Interactiva.</p></header>
-  <section class="viewer card">
-    <div id="scene">
-      <div id="network3d">
-        <div class="layer inputs"><i>0</i><i>0</i></div>
-        <div class="layer hidden"><i>N</i><i>N</i><i>N</i><i>N</i></div>
-        <div class="layer outputs"><i>0.000</i></div>
+  <main class="app">
+    <header>
+      <span>NEURAL 3D</span>
+      <h1>Neurona artificial</h1>
+      <p>Una neurona. Un botón. Sin números.</p>
+    </header>
+
+    <section class="viewer card">
+      <div id="scene" aria-label="Modelo 3D de una neurona">
+        <div id="neuron3d">
+          <div class="soma">
+            <div class="nucleus"></div>
+          </div>
+          <div class="dendrites" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="axon" aria-hidden="true">
+            <i class="myelin"></i><i class="myelin"></i><i class="myelin"></i><i class="myelin"></i>
+            <b class="terminal"></b>
+          </div>
+        </div>
+        <small>arrastra para girar · rueda para zoom</small>
       </div>
-      <small>arrastra para girar · rueda para zoom</small>
-    </div>
-    <div class="actions"><button id="train">Entrenar</button><button id="reset">Reiniciar</button><button id="rotate">Girar</button></div>
-    <div class="stats"><label>Épocas <b id="epoch">0</b></label><label>2 → 4 → 1 neuronas</label></div>
-  </section>
-  <section class="card controls">
-    <div><label>Entrada 1<input id="x1" type="number" min="0" max="1" step="1" value="0"></label><label>Entrada 2<input id="x2" type="number" min="0" max="1" step="1" value="0"></label></div>
-    <button id="predict">Predecir</button><p>Salida <strong id="prediction">0.000</strong> · <span id="classification">0</span></p>
-  </section>
-</main><script src="script.js"></script>
-</body></html>
+
+      <div class="actions">
+        <button id="train">Entrenar neurona</button>
+        <button id="reset">Reiniciar</button>
+        <button id="rotate">Rotación automática</button>
+      </div>
+
+      <div class="status">
+        <span id="state">Lista para aprender</span>
+        <b id="epoch">0</b>
+      </div>
+    </section>
+
+    <section class="card info">
+      <strong id="result">La neurona todavía no ha aprendido.</strong>
+      <p>Presiona <b>Entrenar neurona</b> y el modelo aprenderá automáticamente.</p>
+    </section>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
