@@ -41,8 +41,72 @@ let lastX = 0;
 let lastY = 0;
 let trained = false;
 
+// Memoria de conversación. Se guarda en este dispositivo.
+const MEMORY_KEY = "neural3d_chat_memory_v1";
+let learnedMemory = loadMemory();
+
+function loadMemory() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(MEMORY_KEY) || "[]");
+    return Array.isArray(saved) ? saved.slice(-100) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveMemory() {
+  localStorage.setItem(MEMORY_KEY, JSON.stringify(learnedMemory.slice(-100)));
+}
+
+function normalize(text) {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\\u0300-\\u036f]/g, "")
+    .replace(/[^a-z0-9ñ?¿! ]/g, "")
+    .replace(/\\s+/g, " ")
+    .trim();
+}
+
+function learnFromConversation(question, answer) {
+  const q = normalize(question);
+  if (!q || !answer) return;
+
+  const existing = learnedMemory.find(item => item.question === q);
+  if (existing) {
+    existing.answer = answer;
+    existing.uses = (existing.uses || 0) + 1;
+  } else {
+    learnedMemory.push({ question: q, answer, uses: 1 });
+  }
+  learnedMemory = learnedMemory.slice(-100);
+  saveMemory();
+}
+
+function findLearnedAnswer(text) {
+  const q = normalize(text);
+  const exact = learnedMemory.find(item => item.question === q);
+  if (exact) return exact.answer;
+
+  const words = q.split(" ").filter(word => word.length > 3);
+  if (words.length < 2) return null;
+
+  let best = null;
+  let bestScore = 0;
+  for (const item of learnedMemory) {
+    const knownWords = new Set(item.question.split(" "));
+    const score = words.filter(word => knownWords.has(word)).length / words.length;
+    if (score > bestScore && score >= 0.6) {
+      best = item.answer;
+      bestScore = score;
+    }
+  }
+  return best;
+}
+
 function render() {
   const neuron = $("neuron3d");
+  if (!neuron) return;
   neuron.style.transform = `translate(-50%,-50%) scale(${zoom}) rotateX(${angleX}deg) rotateY(${angleY}deg)`;
   if (rotating) {
     angleY += 0.25;
@@ -72,9 +136,9 @@ function trainBrain() {
 
     trained = true;
     $("state").textContent = "Entrenamiento completado";
-    $("chatState").textContent = "lista para hablar";
-    $("result").textContent = "La neurona ha aprendido el patrón.";
-    $("infoText").textContent = "Ahora puedes escribirle en el chat.";
+    $("chatState").textContent = "lista para aprender";
+    $("result").textContent = "La neurona está lista para aprender del chat.";
+    $("infoText").textContent = "Cada conversación puede enseñarle nuevas respuestas en este dispositivo.";
     $("scene").classList.add("trained");
     button.disabled = false;
     $("chatInput").focus();
@@ -92,16 +156,21 @@ function addMessage(text, type) {
 }
 
 function neuronReply(text) {
-  const message = text.toLowerCase().trim();
+  const message = normalize(text);
   if (!trained) return "Todavía no estoy entrenada. Pulsa «Entrenar neurona» primero. 🧠";
+
+  const learned = findLearnedAnswer(text);
+  if (learned) return learned;
+
   if (message.includes("hola") || message.includes("buenas")) return "Hola. Mis conexiones están activas. 🧠";
-  if (message.includes("quien eres") || message.includes("quién eres")) return "Soy una pequeña neurona artificial. Tengo pesos, un sesgo y una función de activación.";
-  if (message.includes("como estas") || message.includes("cómo estás")) return "Funcionando. No tengo emociones, pero mis cálculos están perfectamente despiertos.";
-  if (message.includes("entrenar") || message.includes("aprend")) return "El entrenamiento ajustó mis pesos para reconocer el patrón que me enseñaron.";
-  if (message.includes("que puedes hacer") || message.includes("qué puedes hacer")) return "Puedo responder mensajes sencillos y mostrar visualmente mi estructura neuronal.";
-  if (message.includes("adios") || message.includes("adiós")) return "Hasta luego. Mis dendritas seguirán aquí, dramáticamente inmóviles.";
-  if (message.endsWith("?")) return "Buena pregunta. Por ahora soy una neurona pequeña, así que todavía estoy aprendiendo a responder cosas más complejas.";
-  return "Procesando... Esa entrada pasó por mis conexiones. Todavía estoy aprendiendo a conversar mejor. 🧠";
+  if (message.includes("quien eres")) return "Soy una pequeña neurona artificial. Tengo pesos, un sesgo, una función de activación y ahora también memoria de conversación.";
+  if (message.includes("como estas")) return "Funcionando. No tengo emociones, pero mis cálculos están despiertos.";
+  if (message.includes("entrenar") || message.includes("aprend")) return "El entrenamiento ajustó mis pesos. Además, puedo guardar nuevas conversaciones como memoria para responder mejor después.";
+  if (message.includes("que puedes hacer")) return "Puedo procesar mensajes, recordar respuestas aprendidas en este dispositivo y mostrar visualmente mi estructura neuronal.";
+  if (message.includes("que sabes") || message.includes("sabes sobre")) return "Sé lo que viene programado y lo que he aprendido durante las conversaciones guardadas en esta memoria.";
+  if (message.includes("adios")) return "Hasta luego. Mis dendritas seguirán aquí, dramáticamente inmóviles.";
+  if (message.endsWith("?")) return "Todavía no conozco esa respuesta. Si me enseñas una respuesta concreta, puedo recordarla en este dispositivo. 🧠";
+  return "He recibido esa información. Puedo recordarla como parte de nuestra conversación, aunque todavía no tengo conocimiento general como una IA grande.";
 }
 
 $("train").addEventListener("click", trainBrain);
@@ -110,6 +179,8 @@ $("reset").addEventListener("click", () => {
   brain.reset();
   epoch = 0;
   trained = false;
+  learnedMemory = [];
+  localStorage.removeItem(MEMORY_KEY);
   angleX = 12;
   angleY = -18;
   zoom = 1;
@@ -119,6 +190,7 @@ $("reset").addEventListener("click", () => {
   $("result").textContent = "La neurona todavía no ha aprendido.";
   $("infoText").textContent = "Presiona Entrenar neurona y el modelo aprenderá automáticamente.";
   $("scene").classList.remove("trained");
+  $("messages").innerHTML = '<div class="message neuronMessage">Memoria reiniciada. Entréname y podemos volver a empezar. 🧠</div>';
   render();
 });
 
@@ -132,10 +204,22 @@ $("chatForm").addEventListener("submit", event => {
   event.preventDefault();
   const input = $("chatInput");
   const text = input.value.trim();
-  if (!text) return;
+  if (!text || !trained) return;
+
   addMessage(text, "user");
   input.value = "";
-  setTimeout(() => addMessage(neuronReply(text), "neuron"), 280);
+  input.disabled = true;
+  $("send").disabled = true;
+
+  setTimeout(() => {
+    const reply = neuronReply(text);
+    addMessage(reply, "neuron");
+    // La respuesta generada queda asociada a la pregunta para futuras conversaciones.
+    learnFromConversation(text, reply);
+    input.disabled = false;
+    $("send").disabled = false;
+    input.focus();
+  }, 280);
 });
 
 const scene = $("scene");
