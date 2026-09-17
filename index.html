@@ -2,39 +2,32 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Neurona 3D</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="theme-color" content="#070707">
+  <title>Neurona</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="app">
     <header>
       <span>NEURAL 3D</span>
-      <h1>Neurona artificial</h1>
-      <p>Una neurona. Un botón. Ahora también puedes hablar con ella.</p>
+      <h1>Neurona</h1>
+      <p>Entrena, conversa y comparte lo aprendido.</p>
     </header>
 
     <section class="viewer card">
       <div id="scene" aria-label="Modelo 3D de una neurona">
         <div id="neuron3d">
           <div class="soma"><div class="nucleus"></div></div>
-          <div class="dendrites" aria-hidden="true">
-            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-          </div>
-          <div class="axon" aria-hidden="true">
-            <i class="myelin"></i><i class="myelin"></i><i class="myelin"></i><i class="myelin"></i>
-            <b class="terminal"></b>
-          </div>
+          <div class="dendrites" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="axon" aria-hidden="true"><i class="myelin"></i><i class="myelin"></i><i class="myelin"></i><i class="myelin"></i><b class="terminal"></b></div>
         </div>
-        <small>arrastra para girar · rueda para zoom</small>
+        <small>Toca y arrastra para girar</small>
       </div>
-
       <div class="actions">
         <button id="train">Entrenar neurona</button>
-        <button id="reset">Reiniciar</button>
-        <button id="rotate">Rotación automática</button>
+        <button id="reset" class="secondary">Reiniciar</button>
       </div>
-
       <div class="status">
         <span id="state">Lista para aprender</span>
         <b id="epoch">0</b>
@@ -43,26 +36,29 @@
 
     <section class="card info">
       <strong id="result">La neurona todavía no ha aprendido.</strong>
-      <p id="infoText">Presiona <b>Entrenar neurona</b> y el modelo aprenderá automáticamente.</p>
+      <p id="infoText">Entrénala una vez y después conversa con ella.</p>
     </section>
 
     <section class="card chat">
       <div class="chatHeader">
-        <div>
-          <span>CONVERSACIÓN</span>
-          <h2>Habla con la neurona</h2>
-        </div>
+        <div><span>MEMORIA GLOBAL</span><h2>Chat</h2></div>
         <span id="chatState">sin entrenar</span>
       </div>
+      <div class="quickPrompts">
+        <button type="button" data-prompt="Hola">Hola</button>
+        <button type="button" data-prompt="¿Quién eres?">¿Quién eres?</button>
+        <button type="button" data-prompt="¿Qué sabes?">¿Qué sabes?</button>
+      </div>
       <div id="messages" class="messages" aria-live="polite">
-        <div class="message neuronMessage">Hola. Soy tu neurona artificial. Entréname y luego podemos hablar. 🧠</div>
+        <div class="message neuronMessage">Hola. Entréname y luego podemos hablar. 🧠</div>
       </div>
       <form id="chatForm" class="chatForm">
-        <input id="chatInput" type="text" maxlength="180" autocomplete="off" placeholder="Escribe un mensaje..." aria-label="Mensaje para la neurona">
+        <input id="chatInput" type="text" maxlength="300" autocomplete="off" enterkeyhint="send" placeholder="Escribe algo..." aria-label="Mensaje para la neurona">
         <button id="send" type="submit">Enviar</button>
       </form>
     </section>
   </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 </body>
 </html>
