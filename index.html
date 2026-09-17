@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f4f5f7">
   <title>RDio</title>
-  <link rel="stylesheet" href="style.css?v=20260917-11">
+  <link rel="stylesheet" href="style.css?v=20260917-12">
 </head>
 <body>
   <div class="orb orb-a"></div><div class="orb orb-b"></div>
@@ -57,12 +57,12 @@
 
     <section class="chatWorkspace glass">
       <div class="workspaceHead">
-        <div><span>NEURAL CONVERSATION</span><h1>Chat</h1><p>Una interfaz limpia para hablar con RDio.</p></div>
-        <div class="workspaceTools"><span id="chatState" class="pill">cargando</span><button id="openMemoryHint" class="miniButton" type="button">Memoria</button></div>
+        <div><span>NEURAL CONVERSATION</span><h1>Chat</h1><p>Un modelo local grande para conversar y una memoria que se adapta con el tiempo.</p></div>
+        <div class="workspaceTools"><span id="chatState" class="pill">IA local</span><button id="openMemoryHint" class="miniButton" type="button">Memoria</button></div>
       </div>
 
       <div id="messages" class="messages">
-        <div class="message neuronMessage">Hola. Soy RDio. 🧠<br><span>Escribe algo y responderé usando lo que conozco.</span></div>
+        <div class="message neuronMessage">Hola. Soy RDio. 🧠<br><span>Mi cerebro local se carga cuando envías tu primer mensaje.</span></div>
       </div>
 
       <form id="chatForm" class="chatForm">
@@ -75,7 +75,7 @@
       <section class="glass networkCard">
         <div class="sectionHead"><div><span>NEURAL CORE</span><h2>Arquitectura</h2></div><span id="state" class="stateText">Cargando…</span></div>
         <canvas id="networkCanvas" aria-label="Visualización 2D de RDio"></canvas>
-        <div class="networkMeta"><span>48 neuronas</span><span>capas profundas</span><span>salida adaptativa</span></div>
+        <div class="networkMeta"><span>48 neuronas visuales</span><span>memoria semántica</span><span>LLM local 3B</span></div>
       </section>
 
       <section class="sideSystem">
@@ -88,14 +88,14 @@
 
         <section class="stats glass">
           <div><span>ERROR</span><strong id="loss">1.0000</strong></div>
-          <div><span>PREDICCIÓN</span><strong id="prediction">0.000</strong></div>
+          <div><span>IA</span><strong>3B local</strong></div>
           <div><span>ARQUITECTURA</span><strong id="architecture">2 · 48 · 32 · 24 · 12 · 1</strong></div>
         </section>
 
         <section class="glass statusCard">
           <span>SYSTEM STATUS</span>
           <h2>RDio está activo.</h2>
-          <p>La red aprende patrones numéricos en su núcleo y usa la memoria persistente para responder en el chat.</p>
+          <p>El núcleo visual sigue mostrando la red experimental; el chat usa un modelo de lenguaje local y la memoria persistente como contexto.</p>
           <button id="statusMemory" class="secondary fullButton" type="button">Abrir memoria</button>
         </section>
       </section>
@@ -103,6 +103,7 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="script.js?v=20260917-11"></script>
+  <script type="module" src="ai-engine.js?v=20260917-12"></script>
+  <script src="script.js?v=20260917-12"></script>
 </body>
 </html>
