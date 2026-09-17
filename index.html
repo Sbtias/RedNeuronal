@@ -2,77 +2,19 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <meta name="theme-color" content="#070707">
   <title>Red Neuronal</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="app">
-    <header>
-      <span>NEURAL NETWORK</span>
-      <h1>Red Neuronal</h1>
-      <p>Una red que aprende, conserva su estado y muestra sus conexiones.</p>
-    </header>
-
-    <section class="card canvasCard">
-      <div class="sectionHead"><div><span>LIENZO 2D</span><h2>Vista pública</h2></div><span>RESPONSIVE</span></div>
-      <canvas id="networkCanvas" aria-label="Lienzo 2D de la red neuronal"></canvas>
-      <p class="caption">Todos pueden ver la misma arquitectura y la fuerza de sus conexiones.</p>
-    </section>
-
-    <section class="viewer card">
-      <div id="scene" aria-label="Visualización 3D de una red neuronal">
-        <div id="network3d">
-          <div class="networkTitle">2 → 4 → 1</div>
-          <div id="connections"></div>
-          <div id="nodes"></div>
-        </div>
-        <div class="sceneHint">Arrastra para rotar · rueda para acercar</div>
-      </div>
-      <div class="actions">
-        <button id="train">Entrenar red</button>
-        <button id="reset" class="secondary">Reiniciar</button>
-      </div>
-      <div class="status"><span id="state">Cargando estado...</span><b id="epoch">0</b></div>
-    </section>
-
-    <section class="stats card">
-      <div><span>ERROR</span><strong id="loss">1.0000</strong></div>
-      <div><span>SALIDA</span><strong id="prediction">0.000</strong></div>
-      <div><span>ARQUITECTURA</span><strong id="architectureValue">2 · 4 · 1</strong></div>
-    </section>
-
-    <section class="card info">
-      <strong id="result">Cargando la memoria de la red...</strong>
-      <p id="infoText">El estado aprendido se recupera desde la base de datos cuando está disponible.</p>
-      <div class="nodeInspector"><span>NODO SELECCIONADO</span><b id="nodeInfo">Ninguno</b></div>
-    </section>
-
-    <section class="card database">
-      <div><span>MEMORIA PERSISTENTE</span><h2>Base de datos</h2></div>
-      <div class="dbRow"><span>Estado</span><b id="dbState">conectando...</b></div>
-      <p>Los pesos de la red y las conversaciones aprendidas se guardan en Supabase. La copia local solo sirve como respaldo del navegador.</p>
-    </section>
-
-    <section class="card chat">
-      <div class="chatHeader">
-        <div><span>MEMORIA</span><h2>Chat</h2></div>
-        <span id="chatState">sin entrenar</span>
-      </div>
-      <div class="quickPrompts">
-        <button type="button" data-prompt="Hola">Hola</button>
-        <button type="button" data-prompt="¿Quién eres?">¿Quién eres?</button>
-        <button type="button" data-prompt="¿Qué aprendiste?">¿Qué aprendiste?</button>
-      </div>
-      <div id="messages" class="messages" aria-live="polite"><div class="message neuronMessage">Estoy esperando mi estado guardado. 🧠</div></div>
-      <form id="chatForm" class="chatForm">
-        <input id="chatInput" type="text" maxlength="300" autocomplete="off" enterkeyhint="send" placeholder="Escribe algo..." aria-label="Mensaje para la red neuronal">
-        <button id="send" type="submit">Enviar</button>
-      </form>
-    </section>
-  </main>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="script.js"></script>
-</body>
-</html>
+<main class="app">
+  <header><span>NEURAL NETWORK</span><h1>Red Neuronal</h1><p>Una red que aprende y conserva lo aprendido.</p></header>
+  <section class="card canvasCard"><div class="sectionHead"><div><span>LIENZO 2D</span><h2>Red en vivo</h2></div><span id="dbState">conectando...</span></div><canvas id="networkCanvas" aria-label="Visualización 2D de la red neuronal"></canvas><div class="legend"><span><i class="dot input"></i>Entrada</span><span><i class="dot hidden"></i>Oculta</span><span><i class="dot output"></i>Salida</span><span>Grosor = fuerza del peso</span></div></section>
+  <section class="actions card"><button id="train">Entrenar red</button><button id="reset" class="secondary">Reiniciar modelo</button><div class="status"><span id="state">Cargando...</span><b>Época <span id="epoch">0</span></b></div></section>
+  <section class="stats card"><div><span>ERROR</span><strong id="loss">1.0000</strong></div><div><span>SALIDA XOR</span><strong id="prediction">0.000</strong></div><div><span>ARQUITECTURA</span><strong>2 · 4 · 1</strong></div><div><span>RECUERDOS</span><strong id="memoryCount">0</strong></div></section>
+  <section class="card info"><strong id="result">Cargando aprendizaje...</strong><p id="infoText">Los pesos y sesgos guardados vuelven a la red al abrir la página.</p><div class="nodeInspector"><span>NODO</span><b id="nodeInfo">Selecciona una neurona en el lienzo</b></div></section>
+  <section class="card chat"><div class="chatHeader"><div><span>MEMORIA APRENDIDA</span><h2>Chat</h2></div><span id="chatState">cargando</span></div><div class="quickPrompts"><button type="button" data-prompt="Hola">Hola</button><button type="button" data-prompt="¿Quién eres?">¿Quién eres?</button><button type="button" data-prompt="¿Qué aprendiste?">¿Qué aprendiste?</button></div><div id="messages" class="messages" aria-live="polite"><div class="message neuronMessage">Cargando mi memoria... 🧠</div></div><form id="chatForm" class="chatForm"><input id="chatInput" maxlength="300" autocomplete="off" placeholder="Escribe algo..."><button id="send">Enviar</button></form></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="script.js"></script>
+</body></html>
