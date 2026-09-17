@@ -11,15 +11,13 @@
     <header>
       <span>NEURAL 3D</span>
       <h1>Neurona artificial</h1>
-      <p>Una neurona. Un botón. Sin números.</p>
+      <p>Una neurona. Un botón. Ahora también puedes hablar con ella.</p>
     </header>
 
     <section class="viewer card">
       <div id="scene" aria-label="Modelo 3D de una neurona">
         <div id="neuron3d">
-          <div class="soma">
-            <div class="nucleus"></div>
-          </div>
+          <div class="soma"><div class="nucleus"></div></div>
           <div class="dendrites" aria-hidden="true">
             <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
           </div>
@@ -45,7 +43,24 @@
 
     <section class="card info">
       <strong id="result">La neurona todavía no ha aprendido.</strong>
-      <p>Presiona <b>Entrenar neurona</b> y el modelo aprenderá automáticamente.</p>
+      <p id="infoText">Presiona <b>Entrenar neurona</b> y el modelo aprenderá automáticamente.</p>
+    </section>
+
+    <section class="card chat">
+      <div class="chatHeader">
+        <div>
+          <span>CONVERSACIÓN</span>
+          <h2>Habla con la neurona</h2>
+        </div>
+        <span id="chatState">sin entrenar</span>
+      </div>
+      <div id="messages" class="messages" aria-live="polite">
+        <div class="message neuronMessage">Hola. Soy tu neurona artificial. Entréname y luego podemos hablar. 🧠</div>
+      </div>
+      <form id="chatForm" class="chatForm">
+        <input id="chatInput" type="text" maxlength="180" autocomplete="off" placeholder="Escribe un mensaje..." aria-label="Mensaje para la neurona">
+        <button id="send" type="submit">Enviar</button>
+      </form>
     </section>
   </main>
   <script src="script.js"></script>
