@@ -1,65 +1,24 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Red Neuronal 3D</title>
-  <link rel="stylesheet" href="style.css">
-</head>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Neural 3D</title><link rel="stylesheet" href="style.css"></head>
 <body>
-  <main class="app">
-    <header>
-      <span class="tag">NEURAL NETWORK / 3D</span>
-      <h1>Red Neuronal</h1>
-      <p>Explora las neuronas y sus conexiones en un espacio 3D.</p>
-    </header>
-
-    <section class="card viewer-card">
-      <div id="scene" class="scene">
-        <div class="layer-label input-label">ENTRADAS</div>
-        <div class="layer-label hidden-label">CAPA OCULTA</div>
-        <div class="layer-label output-label">SALIDA</div>
-        <div id="network3d" class="network3d">
-          <div class="layer inputs">
-            <div class="neuron" data-value="0">0</div>
-            <div class="neuron" data-value="0">0</div>
-          </div>
-          <div class="layer hidden">
-            <div class="neuron">N</div><div class="neuron">N</div>
-            <div class="neuron">N</div><div class="neuron">N</div>
-          </div>
-          <div class="layer outputs">
-            <div class="neuron output">0.000</div>
-          </div>
-        </div>
-        <div class="hint">Arrastra para girar · Rueda para acercar</div>
+<main class="app">
+  <header><span>NEURAL 3D</span><h1>Red neuronal</h1><p>Una red pequeña. Visible. Interactiva.</p></header>
+  <section class="viewer card">
+    <div id="scene">
+      <div id="network3d">
+        <div class="layer inputs"><i>0</i><i>0</i></div>
+        <div class="layer hidden"><i>N</i><i>N</i><i>N</i><i>N</i></div>
+        <div class="layer outputs"><i>0.000</i></div>
       </div>
-
-      <div class="controls">
-        <button id="train">Entrenar</button>
-        <button id="reset">Reiniciar</button>
-        <button id="rotate">Rotación automática</button>
-      </div>
-
-      <div class="stats">
-        <span>Entrada: <b>2</b></span>
-        <span>Ocultas: <b>4</b></span>
-        <span>Salida: <b>1</b></span>
-        <span>Épocas: <b id="epoch">0</b></span>
-      </div>
-    </section>
-
-    <section class="card info-card">
-      <h2>¿Qué estás viendo?</h2>
-      <p>Cada esfera representa una neurona. Las líneas representan conexiones entre capas. El modelo aprende la operación lógica <strong>AND</strong>.</p>
-      <div class="inputs">
-        <label>Entrada 1 <input id="x1" type="number" min="0" max="1" step="1" value="0"></label>
-        <label>Entrada 2 <input id="x2" type="number" min="0" max="1" step="1" value="0"></label>
-        <button id="predict">Predecir</button>
-      </div>
-      <div class="result">Salida: <strong id="prediction">0.000</strong> · <span id="classification">Resultado: 0</span></div>
-    </section>
-  </main>
-  <script src="script.js"></script>
-</body>
-</html>
+      <small>arrastra para girar · rueda para zoom</small>
+    </div>
+    <div class="actions"><button id="train">Entrenar</button><button id="reset">Reiniciar</button><button id="rotate">Girar</button></div>
+    <div class="stats"><label>Épocas <b id="epoch">0</b></label><label>2 → 4 → 1 neuronas</label></div>
+  </section>
+  <section class="card controls">
+    <div><label>Entrada 1<input id="x1" type="number" min="0" max="1" step="1" value="0"></label><label>Entrada 2<input id="x2" type="number" min="0" max="1" step="1" value="0"></label></div>
+    <button id="predict">Predecir</button><p>Salida <strong id="prediction">0.000</strong> · <span id="classification">0</span></p>
+  </section>
+</main><script src="script.js"></script>
+</body></html>
