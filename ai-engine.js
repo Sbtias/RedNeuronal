@@ -1,4 +1,4 @@
-/* RDio Local AI Engine
+/* IAYO Local AI Engine
  * WebLLM + Llama 3.2 3B Instruct
  * The model runs locally in the browser through WebGPU.
  */
@@ -19,7 +19,7 @@ function setStatus(text) {
 
 function readMemory() {
   try {
-    const rows = JSON.parse(localStorage.getItem("rdio_memory_v7") || "[]");
+    const rows = JSON.parse(localStorage.getItem("iayo_memory_v7") || "[]");
     return Array.isArray(rows) ? rows.filter(x => x?.learned === true).slice(0, 40) : [];
   } catch {
     return [];
@@ -66,11 +66,11 @@ async function chat(question) {
   const memories = memoryContext();
 
   const system = [
-    "Eres RDio, un asistente local experimental.",
+    "Eres IAYO, un asistente local experimental.",
     "Responde en español salvo que el usuario use otro idioma.",
     "Sé natural, claro y útil. No inventes recuerdos.",
     "Los recuerdos siguientes son información guardada por el usuario. Úsalos como contexto, pero no los conviertas automáticamente en hechos universales.",
-    "MEMORIA DE RDIO:",
+    "MEMORIA DE IAYO:",
     memories
   ].join("\n");
 
@@ -97,7 +97,7 @@ async function chat(question) {
   return answer;
 }
 
-window.RDioAI = {
+window.IAYOAI = {
   model: MODEL,
   load,
   chat,
