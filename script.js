@@ -270,11 +270,11 @@ $('openMemoryHint')?.addEventListener('click',()=>toggleMemory(true));
 $('statusMemory')?.addEventListener('click',()=>toggleMemory(true));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')toggleMemory(false)});
 
-async function saveChatMessage(role,content){
+async function saveChatMessage(role,content,title='Nueva conversación'){
  if(!db)return;
  try{
   if(!currentConversationId){
-   const c=await timeout(db.from('iayo_conversations').insert({title:q?.slice(0,80)||'Nueva conversación'}).select('id').single());
+   const c=await timeout(db.from('iayo_conversations').insert({title:title.slice(0,80)||'Nueva conversación'}).select('id').single());
    if(!c.error)currentConversationId=c.data.id;
   }
   if(currentConversationId){
@@ -307,7 +307,7 @@ function shouldLearn(text){
 
 $('chatForm')?.addEventListener('submit',async e=>{
  e.preventDefault();const input=$('chatInput'),q=input.value.trim();if(!q)return;
- add(q,'user');input.value='';saveChatMessage('user',q);
+ add(q,'user');input.value='';saveChatMessage('user',q,q);
  const send=$('send');if(send)send.disabled=true;
  try{
   const response=await runIAYOChat(q);
