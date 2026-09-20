@@ -1,11 +1,11 @@
-/* RDio Neural Core v10.0 · aprendizaje real + respuestas dinámicas */
+/* IAYO Neural Core v10.0 · aprendizaje real + respuestas dinámicas */
 'use strict';
 
 const $=id=>document.getElementById(id);
 const SUPABASE_URL='https://otdfvaufiqwlwmaqsljs.supabase.co';
 const SUPABASE_KEY='sb_publishable_f0BM6a9YHx-jT1Rn1f9h6A_hj1BQ-yO';
-const STATE_KEY='__RDIO_STATE_V7__';
-const LOCAL_MEMORY_KEY='rdio_memory_v7';
+const STATE_KEY='__IAYO_STATE_V7__';
+const LOCAL_MEMORY_KEY='iayo_memory_v7';
 
 class NeuralNetwork{
   constructor(layers=[2,48,32,24,12,1]){this.layers=layers.slice();this.learningRate=.14;this.reset()}
@@ -21,9 +21,9 @@ class NeuralNetwork{
 const XOR=[{input:[0,0],target:[0]},{input:[0,1],target:[1]},{input:[1,0],target:[1]},{input:[1,1],target:[0]}];
 
 const KNOWLEDGE=[
- ['hola',['Hola. 🧠','Hola, aquí estoy.','Buenas. Soy RDio. 🧠']],
- ['que eres',['Soy RDio, una red neuronal artificial con memoria persistente.','Soy RDio, un sistema neuronal experimental que puede aprender.','Soy RDio. Tengo memoria y un pequeño modelo neuronal.']],
- ['quien eres',['Soy RDio. 🧠','RDio. Una red neuronal experimental con memoria persistente.','Me llamo RDio y estoy aquí para responderte.']],
+ ['hola',['Hola. 🧠','Hola, aquí estoy.','Buenas. Soy IAYO. 🧠']],
+ ['que eres',['Soy IAYO, una red neuronal artificial con memoria persistente.','Soy IAYO, un sistema neuronal experimental que puede aprender.','Soy IAYO. Tengo memoria y un pequeño modelo neuronal.']],
+ ['quien eres',['Soy IAYO. 🧠','IAYO. Una red neuronal experimental con memoria persistente.','Me llamo IAYO y estoy aquí para responderte.']],
  ['que es una red neuronal',['Una red neuronal es un modelo matemático que aprende patrones ajustando sus pesos.','Es un sistema de capas que transforma datos y modifica sus pesos durante el entrenamiento.']],
  ['como funciona una red neuronal',['Los datos pasan por varias capas y el entrenamiento ajusta los pesos para reducir el error.','Recibo entradas, proceso señales por mis capas y ajusto mis pesos para aprender patrones.']],
  ['que es javascript',['JavaScript es un lenguaje usado para crear aplicaciones e interfaces web interactivas.','JavaScript permite programar comportamiento e interactividad en páginas y aplicaciones web.']],
@@ -45,7 +45,7 @@ const FALLBACKS=[
 ];
 
 const brain=new NeuralNetwork();
-let db=null,memory=[],epoch=0,loss=1,trained=false,learningEvents=0,isTraining=false,saveTimer=null,selectedNode=null;
+let db=null,memory=[],epoch=0,loss=1,trained=false,learningEvents=0,isTraining=false,saveTimer=null,selectedNode=null,currentConversationId=null;
 let recentReplies=[];
 
 function normalize(text){
@@ -102,22 +102,27 @@ async function initDb(){
 async function load(){
  memory=loadLocal();update();if(!await initDb())return;
  try{
-  const r=await timeout(db.from('neural_memory').select('question,answer,created_at').order('created_at',{ascending:false}).limit(500));
+  const r=await timeout(db.from('iayo_memory').select('question,answer,created_at,source,hits').order('created_at',{ascending:false}).limit(500));
   if(r.error)throw r.error;
-  const rows=r.data||[],stateRow=rows.find(x=>x.question===STATE_KEY),remote=rows.filter(x=>x.question!==STATE_KEY);
-  if(remote.length)memory=remote.map(x=>({...x,learned:true,hits:Number(x.hits)||1}));
-  if(stateRow){try{const s=JSON.parse(stateRow.answer);brain.restore(s.network);epoch=Number(s.epoch)||0;loss=Number(s.loss)||1;trained=Boolean(s.trained);learningEvents=Number(s.learningEvents)||0}catch(e){console.warn(e)}}
+  const rows=r.data||[];
+  memory=rows.map(x=>({...x,learned:true,hits:Number(x.hits)||1}));
+  const state=await timeout(db.from('iayo_model_state').select('state').eq('id',1).limit(1));
+  if(!state.error && state.data?.[0]?.state){
+    try{const s=state.data[0].state;brain.restore(s.network);epoch=Number(s.epoch)||0;loss=Number(s.loss)||1;trained=Boolean(s.trained);learningEvents=Number(s.learningEvents)||0}catch(e){console.warn(e)}
+  }
   saveLocal();setStatus(`conectado · ${memory.length} recuerdos`);update()
  }catch(e){console.warn('Supabase:',e);setStatus('modo local');update()}
 }
 
 async function saveState(){
  if(!db)return;
- const payload=JSON.stringify({network:brain.serialize(),epoch,loss,trained,learningEvents,updatedAt:new Date().toISOString()});
+ const state={network:brain.serialize(),epoch,loss,trained,learningEvents,updatedAt:new Date().toISOString()};
  try{
-  const old=await timeout(db.from('neural_memory').select('question').eq('question',STATE_KEY).limit(1));if(old.error)throw old.error;
-  const op=old.data?.length?db.from('neural_memory').update({answer:payload}).eq('question',STATE_KEY):db.from('neural_memory').insert({question:STATE_KEY,answer:payload});
-  const r=await timeout(op);if(r.error)throw r.error
+  const r=await timeout(db.from('iayo_model_state').select('id').eq('id',1).limit(1));if(r.error)throw r.error;
+  const op=r.data?.length
+    ? db.from('iayo_model_state').update({model_name:'IAYO',model_version:'1.0.0',state}).eq('id',1)
+    : db.from('iayo_model_state').insert({id:1,model_name:'IAYO',model_version:'1.0.0',state});
+  const saved=await timeout(op);if(saved.error)throw saved.error
  }catch(e){console.warn('estado:',e)}
 }
 
@@ -129,7 +134,7 @@ async function saveMemory(question,answer){
  else memory.unshift({question,answer,learned:true,hits:1,created_at:new Date().toISOString()});
  memory=memory.slice(0,2000);saveLocal();renderMemoryTable();
  if(!db)return;
- try{const r=await timeout(db.from('neural_memory').insert({question:question.slice(0,300),answer:answer.slice(0,600)}));if(r.error)throw r.error}catch(e){console.warn('memoria:',e)}
+ try{const r=await timeout(db.from('iayo_memory').insert({question:question.slice(0,300),answer:answer.slice(0,1200),source:'user'}));if(r.error)throw r.error}catch(e){console.warn('memoria:',e)}
 }
 
 function trainEpoch(){let total=0;const batch=XOR.slice().sort(()=>Math.random()-.5);for(const s of batch)total+=brain.train(s.input,s.target);return total/XOR.length}
@@ -156,7 +161,7 @@ function teachPair(question,answerText){
  question=question.trim();answerText=answerText.trim();if(!question||!answerText)return false;
  memory=memory.filter(x=>normalize(x.question)!==normalize(question));memory.unshift({question,answer:answerText,learned:true,hits:1,created_at:new Date().toISOString()});
  memory=memory.slice(0,2000);learningEvents++;saveLocal();renderMemoryTable();learnInput(question);saveMemory(question,answerText);queueSave();
- if($('learnResult'))$('learnResult').textContent='✓ RDio aprendió este par y lo guardó en su memoria.';return true
+ if($('learnResult'))$('learnResult').textContent='✓ IAYO aprendió este par y lo guardó en su memoria.';return true
 }
 
 function autoLearnFromInteraction(question,answerText,source='interaction'){
@@ -193,7 +198,7 @@ function answer(text){
  }
  if(best&&bestScore>=.72)return chooseVariant(best.variants);
 
- if(/^(hola|holi|hey|buenas|hello)$/.test(n))return chooseVariant(['Hola. 🧠','Buenas. Soy RDio.','Hola, ¿qué tal? 🧠']);
+ if(/^(hola|holi|hey|buenas|hello)$/.test(n))return chooseVariant(['Hola. 🧠','Buenas. Soy IAYO.','Hola, ¿qué tal? 🧠']);
  if(n.includes('que aprendiste')||n.includes('que has aprendido')||n.includes('que sabes'))return `Tengo ${memory.length.toLocaleString()} recuerdos y ${learningEvents.toLocaleString()} eventos de aprendizaje registrados.`;
  if(n.includes('quien eres')||n.includes('que eres'))return chooseVariant(KNOWLEDGE[1][1]);
  if(n.includes('que es una red neuronal'))return chooseVariant(KNOWLEDGE[3][1]);
@@ -247,7 +252,7 @@ function renderNetwork(){
  const p=brain.layers.map((n,l)=>Array.from({length:n},(_,i)=>pos(l,i,w,h)));
  for(let l=0;l<p.length-1;l++)for(let a=0;a<p[l].length;a++)for(let b=0;b<p[l+1].length;b++){const wt=brain.weights[l][b][a];ctx.beginPath();ctx.moveTo(p[l][a].x,p[l][a].y);ctx.lineTo(p[l+1][b].x,p[l+1][b].y);ctx.lineWidth=Math.min(2.2,.4+Math.abs(wt));ctx.strokeStyle=wt>=0?'rgba(40,40,44,.13)':'rgba(130,130,136,.11)';ctx.stroke()}
  p.forEach((layer,l)=>layer.forEach((v,i)=>{const active=selectedNode?.l===l&&selectedNode?.i===i,rad=l===0||l===p.length-1?17:11;ctx.beginPath();ctx.arc(v.x,v.y,rad+(active?3:0),0,Math.PI*2);ctx.fillStyle=active?'#17181b':'rgba(255,255,255,.72)';ctx.fill();ctx.lineWidth=1;ctx.strokeStyle='rgba(80,80,86,.28)';ctx.stroke();ctx.fillStyle=active?'#fff':'#555';ctx.font='600 8px system-ui';ctx.textAlign='center';ctx.fillText(l===0?'x'+(i+1):l===p.length-1?'y':'h'+l+'.'+(i+1),v.x,v.y+3)}));
- ctx.fillStyle='#8d9097';ctx.font='9px system-ui';ctx.textAlign='center';ctx.fillText(trained?'RDio · '+epoch.toLocaleString()+' épocas · '+memory.length.toLocaleString()+' recuerdos':'RDio · esperando entrenamiento',w/2,h-10);networkCache=true;networkDirty=false
+ ctx.fillStyle='#8d9097';ctx.font='9px system-ui';ctx.textAlign='center';ctx.fillText(trained?'IAYO · '+epoch.toLocaleString()+' épocas · '+memory.length.toLocaleString()+' recuerdos':'IAYO · esperando entrenamiento',w/2,h-10);networkCache=true;networkDirty=false
 }
 
 function invalidateNetwork(){networkCache=null;networkDirty=true;requestAnimationFrame(()=>requestAnimationFrame(renderNetwork))}
@@ -265,8 +270,22 @@ $('openMemoryHint')?.addEventListener('click',()=>toggleMemory(true));
 $('statusMemory')?.addEventListener('click',()=>toggleMemory(true));
 document.addEventListener('keydown',e=>{if(e.key==='Escape')toggleMemory(false)});
 
-async function runRDioChat(q){
- const ai=window.RDioAI;
+async function saveChatMessage(role,content){
+ if(!db)return;
+ try{
+  if(!currentConversationId){
+   const c=await timeout(db.from('iayo_conversations').insert({title:q?.slice(0,80)||'Nueva conversación'}).select('id').single());
+   if(!c.error)currentConversationId=c.data.id;
+  }
+  if(currentConversationId){
+   const m=await timeout(db.from('iayo_messages').insert({conversation_id:currentConversationId,role,content:content.slice(0,6000)}));
+   if(m.error)console.warn('mensaje:',m.error);
+  }
+ }catch(e){console.warn('chat:',e)}
+}
+
+async function runIAYOChat(q){
+ const ai=window.IAYOAI;
  if(ai?.chat){
   try{
    if($('chatState'))$('chatState').textContent=ai.isReady()?'IA local activa':'cargando cerebro…';
@@ -288,11 +307,11 @@ function shouldLearn(text){
 
 $('chatForm')?.addEventListener('submit',async e=>{
  e.preventDefault();const input=$('chatInput'),q=input.value.trim();if(!q)return;
- add(q,'user');input.value='';
+ add(q,'user');input.value='';saveChatMessage('user',q);
  const send=$('send');if(send)send.disabled=true;
  try{
-  const response=await runRDioChat(q);
-  add(response,'neuron');
+  const response=await runIAYOChat(q);
+  add(response,'neuron');saveChatMessage('assistant',response);
   if(shouldLearn(q)){
    const learned=autoLearnFromInteraction(q,response,'explicit-user-memory');
    if(learned)learningEvents++;
@@ -307,4 +326,4 @@ $('chatForm')?.addEventListener('submit',async e=>{
 window.addEventListener('resize',()=>{networkCache=null;networkDirty=true;renderNetwork()});
 window.addEventListener('load',()=>{networkCache=null;networkDirty=true;requestAnimationFrame(()=>requestAnimationFrame(renderNetwork))});
 
-setStatus('cargando RDio…');update();renderMemoryTable();load();invalidateNetwork();
+setStatus('cargando IAYO…');update();renderMemoryTable();load();invalidateNetwork();
